@@ -1356,6 +1356,7 @@ keypressmod(struct wl_listener *listener, void *data)
 	/* Send modifiers to the client. */
 	wlr_seat_keyboard_notify_modifiers(seat,
 		&kb->device->keyboard->modifiers);
+	printstatus();
 }
 
 void
@@ -1677,7 +1678,11 @@ printstatus(void)
 	Monitor *m = NULL;
 	Client *c;
 	unsigned int occ, urg, sel;
-
+	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+	if (!keyboard) return;
+	struct xkb_keymap *keymap = keyboard->keymap;
+	struct xkb_state *state = keyboard->xkb_state;
+	xkb_layout_index_t layout_idx, num_layouts = xkb_keymap_num_layouts(keymap);
 	wl_list_for_each(m, &mons, link) {
 		occ = urg = 0;
 		wl_list_for_each(c, &clients, link) {
@@ -1703,6 +1708,10 @@ printstatus(void)
 		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
 				sel, urg);
 		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
+	}
+	for (layout_idx = 0; layout_idx < num_layouts; layout_idx++) {
+		if (xkb_state_layout_index_is_active(state, layout_idx, XKB_STATE_LAYOUT_EFFECTIVE))
+			printf("keymap %s\n", xkb_keymap_layout_get_name(keymap, layout_idx));
 	}
 }
 
