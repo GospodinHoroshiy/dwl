@@ -1733,6 +1733,10 @@ printstatus(void)
 void
 quit(const Arg *arg)
 {
+	Client *c;
+	wl_list_for_each(c, &clients, link) {
+		if(c->tags) return;
+	}
 	wl_display_terminate(dpy);
 }
 
